@@ -1,0 +1,108 @@
+/* ---------- FOREVERLY themes ---------- */
+[data-theme='baby-pink'] {
+  --bg: #fff5f8;
+  --bg-2: #ffe9f0;
+  --card: #ffffff;
+  --text: #3a2430;
+  --muted: #8d6f7c;
+  --accent: #e0658e;
+  --accent-2: #ff9ebd;
+  --on-accent: #ffffff;
+  --border: rgba(224, 101, 142, 0.18);
+}
+
+[data-theme='soft-blush'] {
+  --bg: #fffaf8;
+  --bg-2: #ffefec;
+  --card: #ffffff;
+  --text: #43302f;
+  --muted: #96807d;
+  --accent: #e79aa6;
+  --accent-2: #f7c2c8;
+  --on-accent: #4a2f31;
+  --border: rgba(231, 154, 166, 0.26);
+}
+
+[data-theme='rose'] {
+  --bg: #fff0f4;
+  --bg-2: #ffdfe8;
+  --card: #ffffff;
+  --text: #40202c;
+  --muted: #956878;
+  --accent: #d14a74;
+  --accent-2: #ff87ab;
+  --on-accent: #ffffff;
+  --border: rgba(209, 74, 116, 0.2);
+}
+
+[data-theme='cream-pink'] {
+  --bg: #fffbf4;
+  --bg-2: #fff1e6;
+  --card: #fffdf9;
+  --text: #46332c;
+  --muted: #9a8377;
+  --accent: #e08aa2;
+  --accent-2: #f9c9d4;
+  --on-accent: #4a2e35;
+  --border: rgba(224, 138, 162, 0.24);
+}
+
+[data-theme='midnight-rose'] {
+  --bg: #1c1017;
+  --bg-2: #29171f;
+  --card: #291721;
+  --text: #ffeaf2;
+  --muted: #c79aab;
+  --accent: #ff8fb6;
+  --accent-2: #ffc2d6;
+  --on-accent: #26121b;
+  --border: rgba(255, 143, 182, 0.2);
+  --shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+  --shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme='black-pink'] {
+  --bg: #0d0a0c;
+  --bg-2: #171114;
+  --card: #171215;
+  --text: #ffe9f1;
+  --muted: #b49aa6;
+  --accent: #ff4d92;
+  --accent-2: #ff8fbd;
+  --on-accent: #120a0e;
+  --border: rgba(255, 77, 146, 0.24);
+  --shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+  --shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+/* theme preview swatches (editor) */
+.theme-card[data-theme='baby-pink'] {
+  --a: #ffd9e4;
+  --b: #e0658e;
+  --c: #ffffff;
+}
+.theme-card[data-theme='soft-blush'] {
+  --a: #ffefec;
+  --b: #e79aa6;
+  --c: #ffffff;
+}
+.theme-card[data-theme='rose'] {
+  --a: #ffdfe8;
+  --b: #d14a74;
+  --c: #ffffff;
+}
+.theme-card[data-theme='cream-pink'] {
+  --a: #fff1e6;
+  --b: #e08aa2;
+  --c: #fffdf9;
+}
+.theme-card[data-theme='midnight-rose'] {
+  --a: #29171f;
+  --b: #ff8fb6;
+  --c: #ffeaf2;
+}
+.theme-card[data-theme='black-pink'] {
+  --a: #0d0a0c;
+  --b: #ff4d92;
+  --c: #ffe9f1;
+}

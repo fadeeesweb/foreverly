@@ -1,0 +1,26 @@
+{
+  "name": "foreverly",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "FOREVERLY - mobile-first digital surprise creator (static, GitHub Pages ready)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "npm run build && node tests/e2e.mjs",
+    "test:features": "npm run build && node tests/shots-live.mjs",
+    "fonts": "node tools/build-fonts.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "^0.462.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "puppeteer-core": "^25.12.0",
+    "vite": "^5.4.11",
+    "wawoff2": "^2.0.1"
+  }
+}
