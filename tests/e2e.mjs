@@ -467,6 +467,19 @@ try {
     await noHorizontalOverflow(rec, `recipient ${w}`);
   }
 
+  /* ---------- recipient served from the root URL (short-link shape) ---------- */
+  const root = await browser.newPage();
+  await watch(root, 'root-link');
+  await root.setViewport({ width: 375, height: 812, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  await root.goto(`${BASE}/#${shareUrl.split('#')[1]}`, { waitUntil: 'networkidle0' });
+  await sleep(900);
+  const rootWelcome = await root.$eval('.welcome-title', (el) => el.textContent).catch(() => null);
+  check('root URL opens recipient (short-link shape)', /special for you/i.test(rootWelcome || ''), rootWelcome);
+  await root.click('.welcome-inner .btn-primary');
+  await sleep(1500);
+  const rootCover = await root.$eval('.cover-title', (el) => el.textContent).catch(() => '');
+  check('root recipient renders the gift', rootCover === 'For You, Always.', rootCover);
+
   /* ---------- invalid link ---------- */
   const bad = await browser.newPage();
   await watch(bad, 'broken');

@@ -13,6 +13,7 @@ import {
   Lock
 } from 'lucide-react';
 import Editor from './editor/Editor';
+import RecipientApp from './recipient/RecipientApp';
 import CustomThemeStyle from './components/CustomThemeStyle';
 import { loadCurrent, saveCurrent } from './storage/drafts';
 import { defaultSurprise } from './utils/defaults';
@@ -23,6 +24,7 @@ import './styles/landing.css';
 import './styles/editor.css';
 
 const isEditorRoute = () => window.location.hash.startsWith('#/editor');
+const GIFT_HASH = /^#(f|z|j)\./;
 
 function Landing({ onCreate, onHow }) {
   return (
@@ -151,8 +153,8 @@ function Landing({ onCreate, onHow }) {
           <div className="note-card">
             <Link2 size={16} aria-hidden="true" />
             <p>
-              The surprise travels inside the link you share, encoded for the browser - no database and no account. Keep
-              the link private, because anyone who has it can open the surprise.
+              Your surprise travels inside one tiny private link - no app, no account, no public profile. Keep the link
+              private, because anyone who has it can open the surprise.
             </p>
           </div>
           <div className="note-card">
@@ -183,11 +185,15 @@ function Landing({ onCreate, onHow }) {
 }
 
 function Root() {
+  const [hash, setHash] = useState(() => window.location.hash);
   const [route, setRoute] = useState(isEditorRoute() ? 'editor' : 'landing');
   const [surprise, setSurprise] = useState(() => loadCurrent() || defaultSurprise());
 
   useEffect(() => {
-    const onHash = () => setRoute(isEditorRoute() ? 'editor' : 'landing');
+    const onHash = () => {
+      setHash(window.location.hash);
+      setRoute(isEditorRoute() ? 'editor' : 'landing');
+    };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
@@ -205,6 +211,8 @@ function Root() {
     const el = document.getElementById('how');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  if (GIFT_HASH.test(hash)) return <RecipientApp />;
 
   return (
     <>
