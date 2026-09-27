@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Heart } from 'lucide-react';
 import { decodeSurprise } from '../sharing/codec';
+import { loadGift } from '../sharing/store';
 import SurpriseView from './SurpriseView';
 import CustomThemeStyle from '../components/CustomThemeStyle';
 import { defaultSurprise } from '../utils/defaults';
@@ -46,7 +47,8 @@ function App() {
         cancelled = true;
       };
     }
-    decodeSurprise(hash)
+    const task = hash.startsWith('f.') && hash.length > 3 ? loadGift(hash.slice(2)) : decodeSurprise(hash);
+    task
       .then((data) => {
         if (cancelled) return;
         setState(data ? { status: 'ready', data } : { status: 'broken', data: null });

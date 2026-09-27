@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Check, Copy, ExternalLink, RotateCcw, Share2, AlertCircle } from 'lucide-react';
 import { Sheet, Button } from './ui';
-import { buildShareUrl } from '../sharing/codec';
+import { buildShareUrl, toSharePayload } from '../sharing/codec';
+import { buildShortShareUrl, shortLinksEnabled } from '../sharing/store';
 import { bytesLabel } from '../utils/image';
 
 export default function ShareSheet({ open, surprise, onClose, onRestart, onOpenPreview }) {
   const [url, setUrl] = useState('');
+  const [short, setShort] = useState(false);
   const [building, setBuilding] = useState(true);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
@@ -17,10 +19,25 @@ export default function ShareSheet({ open, surprise, onClose, onRestart, onOpenP
     setBuilding(true);
     setError('');
     setCopied(false);
+    setShort(false);
     buildShareUrl(surprise)
-      .then((built) => {
+      .then(async (inline) => {
         if (!alive) return;
-        setUrl(built);
+        if (!shortLinksEnabled()) {
+          setUrl(inline);
+          setBuilding(false);
+          setCanShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function');
+          return;
+        }
+        try {
+          const built = await buildShortShareUrl(toSharePayload(surprise));
+          if (!alive) return;
+          setUrl(built);
+          setShort(true);
+        } catch (e) {
+          if (!alive) return;
+          setUrl(inline);
+        }
         setBuilding(false);
         setCanShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function');
       })
@@ -60,7 +77,7 @@ export default function ShareSheet({ open, surprise, onClose, onRestart, onOpenP
   };
 
   const bytes = url.length;
-  const heavy = bytes > 1_300_000;
+  const heavy = !short && bytes > 1_300_000;
 
   return (
     <Sheet open={open} title="Your surprise is ready." onClose={onClose}>
@@ -69,7 +86,7 @@ export default function ShareSheet({ open, surprise, onClose, onRestart, onOpenP
       <div className="link-card">
         <div className="link-card-head">
           <span className="link-dot" aria-hidden="true" />
-          <span>Shareable link</span>
+          <span>{short ? 'Short link' : 'Shareable link'}</span>
           <span className="link-size">{building ? '...' : bytesLabel(bytes)}</span>
         </div>
         <p className="link-url">{building ? 'Building your link...' : url}</p>
@@ -109,8 +126,9 @@ export default function ShareSheet({ open, surprise, onClose, onRestart, onOpenP
       ) : null}
 
       <p className="share-note">
-        The link contains the surprise data itself, encoded in the address - it is not a private database record. Anyone
-        with the link can open the surprise, so share it only with the person it was made for.
+        {short
+          ? 'This short link stores the surprise data online so it opens instantly, even with photos and music. Anyone with the link can open the surprise, so share it only with the person it was made for.'
+          : 'The link contains the surprise data itself, encoded in the address - it is not a private database record. Anyone with the link can open the surprise, so share it only with the person it was made for.'}
       </p>
 
       <Button variant="ghost" className="full" onClick={onRestart}>
