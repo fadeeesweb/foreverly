@@ -35,8 +35,20 @@ export default function ShareSheet({ open, surprise, onClose, onRestart, onOpenP
           setUrl(built);
           setShort(true);
         } catch (e) {
+          await new Promise((r) => setTimeout(r, 1200));
           if (!alive) return;
-          setUrl(inline);
+          try {
+            const retry = await buildShortShareUrl(toSharePayload(surprise));
+            if (!alive) return;
+            setUrl(retry);
+            setShort(true);
+          } catch (e2) {
+            if (!alive) return;
+            setUrl(inline);
+            setError(
+              'The short link service is unreachable right now (network or an ad-blocker), so the full link below was built instead. It works fine, just longer - close and reopen this panel to try again.'
+            );
+          }
         }
         setBuilding(false);
         setCanShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function');
@@ -114,6 +126,13 @@ export default function ShareSheet({ open, surprise, onClose, onRestart, onOpenP
           Preview it first
         </button>
       </div>
+
+      {error ? (
+        <div className="share-warning">
+          <AlertCircle size={16} aria-hidden="true" />
+          <p>{error}</p>
+        </div>
+      ) : null}
 
       {heavy ? (
         <div className="share-warning">
