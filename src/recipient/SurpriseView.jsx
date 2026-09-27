@@ -569,7 +569,7 @@ export default function SurpriseView({ data, isPreview = false, onExitPreview, l
           <p className="welcome-eyebrow">Foreverly</p>
           <h1 className="welcome-title">Someone made something special for you.</h1>
           <p className="welcome-sub">Take a breath. It&rsquo;s all yours.</p>
-          <button type="button" className="btn-primary btn-lg" onClick={openSurprise}>
+          <button type="button" className="btn-primary btn-lg btn-glass" onClick={openSurprise}>
             Open Your Surprise
           </button>
         </div>

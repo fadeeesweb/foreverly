@@ -697,9 +697,9 @@
   object-fit: cover;
 }
 
-/* liquid-glass rounded-square buttons (gift open + secret reveal) */
-.gift-closed .btn-primary.btn-glass,
-.secret-closed .btn-outline.btn-glass {
+/* liquid-glass rounded buttons (welcome, gift open, secret reveal) */
+.btn-primary.btn-glass,
+.btn-outline.btn-glass {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -730,8 +730,8 @@
 }
 
 /* specular sheen sweeping the top half */
-.gift-closed .btn-primary.btn-glass::before,
-.secret-closed .btn-outline.btn-glass::before {
+.btn-primary.btn-glass::before,
+.btn-outline.btn-glass::before {
   content: '';
   position: absolute;
   z-index: -1;
@@ -745,8 +745,8 @@
 }
 
 /* thin refracted rim around the glass */
-.gift-closed .btn-primary.btn-glass::after,
-.secret-closed .btn-outline.btn-glass::after {
+.btn-primary.btn-glass::after,
+.btn-outline.btn-glass::after {
   content: '';
   position: absolute;
   z-index: -1;
@@ -767,8 +767,8 @@
   pointer-events: none;
 }
 
-.gift-closed .btn-primary.btn-glass:hover,
-.secret-closed .btn-outline.btn-glass:hover {
+.btn-primary.btn-glass:hover,
+.btn-outline.btn-glass:hover {
   filter: brightness(1.05);
   box-shadow:
     0 12px 24px rgba(60, 20, 40, 0.2),
@@ -776,9 +776,18 @@
     inset 0 -9px 16px rgba(255, 255, 255, 0.2);
 }
 
-.gift-closed .btn-primary.btn-glass:active,
-.secret-closed .btn-outline.btn-glass:active {
+.btn-primary.btn-glass:active,
+.btn-outline.btn-glass:active {
   transform: scale(0.955);
+}
+
+/* the welcome CTA reads a touch larger on its own screen */
+.welcome-inner .btn-primary.btn-glass {
+  min-width: 216px;
+  min-height: 56px;
+  border-radius: 20px;
+  font-size: 16px;
+  letter-spacing: 0.03em;
 }
 
 /* gift */
