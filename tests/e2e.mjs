@@ -13,6 +13,8 @@ const CHROME =
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PHOTO = path.resolve(__dirname, '../public/icons/icon-192.png');
+const GIF = path.resolve(__dirname, 'fixtures/anim.gif');
+const GIF_DATA_URL = 'data:image/gif;base64,' + fs.readFileSync(GIF).toString('base64');
 
 const results = [];
 const errors = [];
@@ -173,6 +175,25 @@ try {
   });
   check('cover color pickers available', colorSet >= 3, `colorInputs=${colorSet}`);
 
+  // animated GIF: kept byte-for-byte, cropper skipped, crop button hidden
+  const coverInput = await page.$('input[type="file"]');
+  await coverInput.uploadFile(GIF);
+  await sleep(700);
+  const coverGif = await page.evaluate(() => {
+    const preview = document.querySelector('.image-picker-preview img');
+    return {
+      src: preview ? preview.getAttribute('src') : '',
+      cropSheet: Boolean(document.querySelector('.crop-sheet')),
+      cropBtn: Boolean(document.querySelector('.image-picker-preview .crop-btn'))
+    };
+  });
+  check('cover GIF kept byte-identical', coverGif.src === GIF_DATA_URL, `len=${coverGif.src.length}`);
+  check(
+    'cover GIF skips cropper + hides crop button',
+    !coverGif.cropSheet && !coverGif.cropBtn,
+    `sheet=${coverGif.cropSheet} btn=${coverGif.cropBtn}`
+  );
+
   // letter
   await page.click('.bottom-nav .nav-item:nth-child(2)');
   await sleep(350);
@@ -214,6 +235,28 @@ try {
   const chosenCaptionFont = captionFontOpts[3];
   await setInput(page, 'select[aria-label="Caption font"]', chosenCaptionFont);
   await sleep(200);
+
+  // GIF photo: no cropper, hidden crop button, animation bytes untouched
+  const gifInput = await page.$('input[type="file"]');
+  await gifInput.uploadFile(GIF);
+  await sleep(700);
+  const gifRow = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll('.photo-row')];
+    const last = rows[rows.length - 1];
+    const img = last ? last.querySelector('img') : null;
+    return {
+      count: rows.length,
+      src: img ? img.getAttribute('src') : '',
+      cropSheet: Boolean(document.querySelector('.crop-sheet')),
+      cropBtn: Boolean(last ? last.querySelector('[aria-label^="Crop"]') : null)
+    };
+  });
+  check('GIF photo added without cropper', gifRow.count === 2 && !gifRow.cropSheet, `count=${gifRow.count} sheet=${gifRow.cropSheet}`);
+  check(
+    'GIF photo keeps animation bytes + hides crop button',
+    gifRow.src === GIF_DATA_URL && !gifRow.cropBtn,
+    `src=${gifRow.src.slice(0, 30)} btn=${gifRow.cropBtn}`
+  );
 
   // music: pick a song from the device
   await page.click('.bottom-nav .nav-item:nth-child(4)');
@@ -347,6 +390,13 @@ try {
     `${payload.cover?.fontEyebrow || '(empty)'} / ${payload.cover?.fontTitle || '(empty)'} / ${payload.cover?.fontSubtitle || '(empty)'}`
   );
   check(
+    'GIF carried into payload byte-identical (cover + memory)',
+    payload.cover?.bgImage === GIF_DATA_URL &&
+      payload.photos?.length === 2 &&
+      payload.photos[1]?.data === GIF_DATA_URL,
+    `bg=${String(payload.cover?.bgImage).slice(0, 30)} photos=${payload.photos?.length}`
+  );
+  check(
     'per-field letter + gift + secret fonts carried in payload',
     payload.letter?.fontMessage === chosenLetterFont &&
       payload.letter?.fontTitle === chosenLetterTitleFont &&
@@ -394,6 +444,8 @@ try {
   check('recipient cover name', /For Sarah/.test(coverName), coverName);
   const coverTitleColor = await rec.$eval('.cover-title', (el) => getComputedStyle(el).color).catch(() => '');
   check('custom cover text color applied', coverTitleColor === 'rgb(255, 0, 0)', coverTitleColor);
+  const recCoverBg = await rec.$eval('.cover-bg', (el) => el.getAttribute('src')).catch(() => '');
+  check('recipient cover renders the animated GIF', recCoverBg === GIF_DATA_URL, `src=${String(recCoverBg).slice(0, 30)}`);
   const coverFontFamily = await rec.$eval('.cover-title', (el) => getComputedStyle(el).fontFamily).catch(() => '');
   check('recipient uses the chosen cover font', coverFontFamily.includes(chosenFont), coverFontFamily.slice(0, 60));
   const eyebrowFontFamily = await rec.$eval('.cover-eyebrow', (el) => getComputedStyle(el).fontFamily).catch(() => '');
@@ -430,8 +482,19 @@ try {
   check('signature font applied on recipient', signFontFamily.includes(chosenSignFont), signFontFamily.slice(0, 50));
   const memories = await rec.$$eval('.memory-frame img', (n) => n.length);
   check('memory photo rendered', memories === 1, `count=${memories}`);
+  const memDots = await rec.$$eval('.dots .dot', (n) => n.length);
+  check('both memory photos in the carousel', memDots === 2, `dots=${memDots}`);
   const captionFontFamily = await rec.$eval('.memory-caption', (el) => getComputedStyle(el).fontFamily).catch(() => '');
   check('caption font applied on recipient', captionFontFamily.includes(chosenCaptionFont), captionFontFamily.slice(0, 50));
+  // swipe to the GIF memory and confirm it renders animated
+  await rec.evaluate(() => document.querySelector('.mem-nav.next')?.scrollIntoView({ block: 'center' }));
+  await sleep(700);
+  await rec.click('.mem-nav.next');
+  await sleep(500);
+  const memGifSrc = await rec.$eval('.memory-frame img', (el) => el.getAttribute('src')).catch(() => '');
+  check('recipient memory carousel renders the animated GIF', memGifSrc === GIF_DATA_URL, `src=${String(memGifSrc).slice(0, 30)}`);
+  const recGifCount = await rec.$$eval('img[src^="data:image/gif"]', (n) => n.length);
+  check('recipient shows animated GIFs (cover + memory)', recGifCount === 2, `count=${recGifCount}`);
   const giftLead = await rec.$eval('.gift-lead', (el) => el.textContent).catch(() => '');
   check('gift closed state', /little something/i.test(giftLead), giftLead);
   await rec.click('.gift-closed .btn-primary');

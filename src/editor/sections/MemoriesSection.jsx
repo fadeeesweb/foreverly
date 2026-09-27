@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Crop, ImagePlus, Trash2 } from 'lucide-react';
 import { Panel, Field, ChoiceGroup, Button, FontPicker } from '../../components/ui';
-import { compressPhotos } from '../../utils/image';
+import { compressPhotos, isGifSrc } from '../../utils/image';
 import ImageCropper from '../../components/ImageCropper';
 
 const LAYOUTS = [
@@ -15,17 +15,28 @@ export default function MemoriesSection({ value, photos, layout, onChange, onLay
   const inputRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState('');
+  const [notice, setNotice] = useState('');
   const [crop, setCrop] = useState({ index: -1, src: '' });
 
   const addFiles = async (files) => {
     if (!files || !files.length) return;
     setBusy(true);
-    const added = await compressPhotos(Array.from(files), (i, total) => setProgress(`${i} of ${total}`));
+    setNotice('');
+    const skipped = [];
+    const added = await compressPhotos(
+      Array.from(files),
+      (i, total) => setProgress(`${i} of ${total}`),
+      (f, err) => {
+        const why = err && err.message === 'gif-too-big' ? 'over 4 MB' : 'could not be read';
+        skipped.push(`${(f && f.name) || 'file'} (${why})`);
+      }
+    );
     onChange([...photos, ...added]);
     setBusy(false);
     setProgress('');
+    if (skipped.length) setNotice(`Not added: ${skipped.join(', ')}`);
     if (inputRef.current) inputRef.current.value = '';
-    if (added.length === 1) setCrop({ index: photos.length, src: added[0].data });
+    if (added.length === 1 && !isGifSrc(added[0].data)) setCrop({ index: photos.length, src: added[0].data });
   };
 
   const move = (index, dir) => {
@@ -43,7 +54,7 @@ export default function MemoriesSection({ value, photos, layout, onChange, onLay
   };
 
   return (
-    <Panel title="Memories" hint="Photos are optimised for phones before they go into the link.">
+    <Panel title="Memories" hint="Photos are optimised for phones before they go into the link. GIFs stay animated (max 4 MB each).">
       <Button
         variant="soft"
         className="full"
@@ -53,6 +64,7 @@ export default function MemoriesSection({ value, photos, layout, onChange, onLay
         <ImagePlus size={17} />
         {busy ? `Optimising ${progress}` : 'Add photos'}
       </Button>
+      {notice ? <p className="field-error">{notice}</p> : null}
       <input
         ref={inputRef}
         type="file"
@@ -86,14 +98,16 @@ export default function MemoriesSection({ value, photos, layout, onChange, onLay
                   onChange={(e) => caption(i, e.target.value)}
                 />
                 <div className="photo-actions">
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    onClick={() => setCrop({ index: i, src: p.data })}
-                    aria-label={`Crop photo ${i + 1}`}
-                  >
-                    <Crop size={15} />
-                  </button>
+                  {isGifSrc(p.data) ? null : (
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      onClick={() => setCrop({ index: i, src: p.data })}
+                      aria-label={`Crop photo ${i + 1}`}
+                    >
+                      <Crop size={15} />
+                    </button>
+                  )}
                   <button type="button" className="icon-btn" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move photo up">
                     <ArrowUp size={15} />
                   </button>

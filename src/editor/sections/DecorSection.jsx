@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Crop, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { Panel, Field, ChoiceGroup, Slider, Toggle, Button } from '../../components/ui';
 import { DECORATIONS, DECOR_ANIMS, makeDecoration } from '../../utils/defaults';
-import { compressImage } from '../../utils/image';
+import { compressImage, isGifFile, isGifSrc } from '../../utils/image';
 import { asset } from '../../utils/helpers';
 import ImageCropper from '../../components/ImageCropper';
 
@@ -22,10 +22,20 @@ export default function DecorSection({ value, onChange, floating, onFloating }) 
     if (!file) return;
     try {
       const data = await compressImage(file, { maxDim: 420, quality: 0.86, alpha: true });
-      setCrop({ id: null, src: data });
-      setNotice('');
+      if (isGifFile(file)) {
+        /* animated stickers go straight in - cropping would freeze them */
+        onChange([...value, makeDecoration({ key: 'custom', name: 'Custom sticker', src: data, size: 44 })]);
+        setNotice('');
+      } else {
+        setCrop({ id: null, src: data });
+        setNotice('');
+      }
     } catch (e) {
-      setNotice('That image could not be added.');
+      setNotice(
+        e && e.message === 'gif-too-big'
+          ? 'That GIF is over 4 MB - please choose a smaller one.'
+          : 'That image could not be added.'
+      );
     }
     if (customInput.current) customInput.current.value = '';
   };
@@ -67,7 +77,7 @@ export default function DecorSection({ value, onChange, floating, onFloating }) 
       </Field>
 
       <Button variant="soft" className="full" onClick={() => customInput.current && customInput.current.click()}>
-        <Plus size={16} /> Upload custom PNG
+        <Plus size={16} /> Upload custom PNG / GIF
       </Button>
       <input
         ref={customInput}
@@ -90,7 +100,7 @@ export default function DecorSection({ value, onChange, floating, onFloating }) 
                   style={{ width: `${Math.min(36, d.size)}px` }}
                 />
                 <span className="decor-name">{d.name}</span>
-                {d.key === 'custom' ? (
+                {d.key === 'custom' && !isGifSrc(d.src) ? (
                   <button
                     type="button"
                     className="icon-btn"

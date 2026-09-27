@@ -54,7 +54,7 @@ export default function CoverSection({ surprise, onChange }) {
         label="Background image"
         value={cover.bgImage}
         onChange={(v) => setCover({ bgImage: v })}
-        hint="Images are resized and compressed automatically so the shared link stays light."
+        hint="Images are resized and compressed automatically so the shared link stays light. GIFs keep their animation (max 4 MB)."
       />
 
       <ChoiceGroup

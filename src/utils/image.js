@@ -1,6 +1,21 @@
 const MAX_DIMENSION = 1000;
 const SHARE_QUALITY = 0.72;
 
+export const MAX_GIF_BYTES = 4 * 1024 * 1024;
+
+export const isGifFile = (file) =>
+  Boolean(file) && (file.type === 'image/gif' || /\.gif$/i.test(file.name || ''));
+
+export const isGifSrc = (src) => /^data:image\/gif\b/i.test(String(src || ''));
+
+const fileToDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(String(fr.result || ''));
+    fr.onerror = () => reject(new Error('could not read file'));
+    fr.readAsDataURL(file);
+  });
+
 const loadImage = (file) =>
   new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -47,9 +62,16 @@ const canvasToUrl = (canvas, quality, alphaAware) => {
 
 /**
  * Resizes + compresses an uploaded image into a small data URL that is safe
- * to embed inside the shareable surprise link.
+ * to embed inside the shareable surprise link. Animated GIFs skip the canvas
+ * re-encode (it would freeze them) and are kept byte-for-byte, up to 4 MB.
  */
 export async function compressImage(file, { maxDim = MAX_DIMENSION, quality = SHARE_QUALITY, alpha = false } = {}) {
+  if (isGifFile(file)) {
+    if (file.size > MAX_GIF_BYTES) throw new Error('gif-too-big');
+    const data = await fileToDataUrl(file);
+    if (!data.startsWith('data:image/gif')) throw new Error('gif-unreadable');
+    return data;
+  }
   const img = await loadImage(file);
   const canvas = toCanvas(img, maxDim);
   const data = canvasToUrl(canvas, quality, alpha);
@@ -57,7 +79,7 @@ export async function compressImage(file, { maxDim = MAX_DIMENSION, quality = SH
   return data;
 }
 
-export async function compressPhotos(files, onProgress) {
+export async function compressPhotos(files, onProgress, onError) {
   const out = [];
   for (let i = 0; i < files.length; i += 1) {
     const f = files[i];
@@ -66,7 +88,7 @@ export async function compressPhotos(files, onProgress) {
       const data = await compressImage(f, { maxDim: 1000, quality: 0.72 });
       out.push({ id: `ph_${Date.now().toString(36)}_${i}`, data, caption: '' });
     } catch (e) {
-      /* skip broken files */
+      if (onError) onError(f, e);
     }
     if (onProgress) onProgress(i + 1, files.length);
   }

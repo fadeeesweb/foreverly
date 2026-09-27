@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Crop, ImagePlus, Trash2 } from 'lucide-react';
-import { compressImage } from '../utils/image';
+import { compressImage, isGifFile, isGifSrc } from '../utils/image';
 import ImageCropper from './ImageCropper';
 
 export default function ImagePicker({ value, onChange, label = 'Image', alpha = false, hint, maxDim = 900 }) {
@@ -9,15 +9,27 @@ export default function ImagePicker({ value, onChange, label = 'Image', alpha = 
   const [error, setError] = useState('');
   const [cropSrc, setCropSrc] = useState('');
 
+  const gifValue = isGifSrc(value);
+
   const handleFile = async (file) => {
     if (!file) return;
     setError('');
     setBusy(true);
     try {
+      const gif = isGifFile(file);
       const data = await compressImage(file, { maxDim, quality: alpha ? 0.84 : 0.74, alpha });
-      setCropSrc(data);
+      if (gif) {
+        /* keep the animation - the cropper would flatten it to one frame */
+        onChange(data);
+      } else {
+        setCropSrc(data);
+      }
     } catch (e) {
-      setError('Could not read that image. Try another file.');
+      setError(
+        e && e.message === 'gif-too-big'
+          ? 'That GIF is over 4 MB - please choose a smaller one.'
+          : 'Could not read that image. Try another file.'
+      );
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = '';
@@ -48,14 +60,16 @@ export default function ImagePicker({ value, onChange, label = 'Image', alpha = 
         {value ? (
           <div className="image-picker-preview">
             <img src={value} alt={`${label} preview`} />
-            <button
-              type="button"
-              className="icon-btn crop-btn"
-              onClick={() => setCropSrc(value)}
-              aria-label={`Crop ${label.toLowerCase()}`}
-            >
-              <Crop size={14} />
-            </button>
+            {gifValue ? null : (
+              <button
+                type="button"
+                className="icon-btn crop-btn"
+                onClick={() => setCropSrc(value)}
+                aria-label={`Crop ${label.toLowerCase()}`}
+              >
+                <Crop size={14} />
+              </button>
+            )}
             <button
               type="button"
               className="icon-btn danger"
